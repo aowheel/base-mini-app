@@ -14,8 +14,8 @@ export async function generateMetadata(): Promise<Metadata> {
 		NEXT_PUBLIC_APP_HERO_IMAGE,
 		NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
 		NEXT_PUBLIC_URL,
-		NEXT_PUBLIC_SPLASH_IMAGE,
-		NEXT_PUBLIC_SPLASH_BACKGROUND_COLOR,
+		NEXT_PUBLIC_APP_SPLASH_IMAGE,
+		NEXT_PUBLIC_APP_SPLASH_BACKGROUND_COLOR,
 	} = process.env;
 	return {
 		title: NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
@@ -31,8 +31,8 @@ export async function generateMetadata(): Promise<Metadata> {
 						type: "launch_frame",
 						name: NEXT_PUBLIC_ONCHAINKIT_PROJECT_NAME,
 						url: NEXT_PUBLIC_URL,
-						splashImageUrl: NEXT_PUBLIC_SPLASH_IMAGE,
-						splashBackgroundColor: NEXT_PUBLIC_SPLASH_BACKGROUND_COLOR,
+						splashImageUrl: NEXT_PUBLIC_APP_SPLASH_IMAGE,
+						splashBackgroundColor: NEXT_PUBLIC_APP_SPLASH_BACKGROUND_COLOR,
 					},
 				},
 			}),
