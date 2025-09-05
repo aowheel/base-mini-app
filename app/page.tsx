@@ -18,8 +18,9 @@ import {
 	WalletDropdown,
 	WalletDropdownDisconnect,
 } from "@coinbase/onchainkit/wallet";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, Features, Home, Icon } from "./components/DemoComponents";
+import { Button, Features, Home, Icon } from "../components/DemoComponents";
 
 export default function App() {
 	const { setFrameReady, isFrameReady, context } = useMiniKit();
@@ -67,6 +68,8 @@ export default function App() {
 		return null;
 	}, [context, frameAdded, handleAddFrame]);
 
+	const router = useRouter();
+
 	return (
 		<div className="flex flex-col min-h-screen font-sans text-[var(--app-foreground)] mini-app-theme from-[var(--app-background)] to-[var(--app-gray)]">
 			<div className="w-full max-w-md mx-auto px-4 py-3">
@@ -95,6 +98,12 @@ export default function App() {
 				<main className="flex-1">
 					{activeTab === "home" && <Home setActiveTab={setActiveTab} />}
 					{activeTab === "features" && <Features setActiveTab={setActiveTab} />}
+					<button type="button" onClick={() => router.push("/books")}>
+						Books
+					</button>
+					<button type="button" onClick={() => router.push("/reviews")}>
+						Book Reviews
+					</button>
 				</main>
 
 				<footer className="mt-2 pt-4 flex justify-center">
