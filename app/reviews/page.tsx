@@ -18,6 +18,7 @@ import {
 	ExclamationTriangleIcon,
 	HeartIcon,
 	HomeIcon,
+	XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import Image from "next/image";
@@ -47,7 +48,7 @@ const GET_REVIEWS = gql`
 	}
 `;
 
-function BookDetail({ uri }: { uri: string }) {
+function BookDetail({ uri, bookId }: { uri: string; bookId: string }) {
 	const { data, loading, error } = useIpfsJson<{
 		name: string;
 		description: string;
@@ -56,34 +57,48 @@ function BookDetail({ uri }: { uri: string }) {
 	}>(uri);
 
 	if (loading) {
-		return <div className="animate-pulse bg-gray-200 h-4 w-20 rounded"></div>;
+		return (
+			<div className="animate-pulse bg-gray-200 h-4 w-20 rounded flex-shrink-0"></div>
+		);
 	}
 
 	if (error || !data) {
-		return <span className="text-gray-400 italic">Unknown Book</span>;
+		return (
+			<span className="text-gray-400 italic flex-shrink-0">Unknown Book</span>
+		);
 	}
 
 	return (
-		<span className="font-medium text-blue-700 truncate">{data.name}</span>
+		<Link
+			href={`/books/${bookId}`}
+			className="font-bold text-blue-800 hover:text-blue-900 transition-all duration-200 flex-shrink-0 inline-block bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-md transform hover:scale-105"
+			title={data.name}
+		>
+			{data.name}
+		</Link>
 	);
 }
 
 function ReviewDetail({
 	uri,
 	bookUri,
+	bookId,
 	owner,
 	likes,
 	userLikes,
 	onLike,
+	onResetLike,
 	isPending,
 	isSuccess,
 }: {
 	uri: string;
 	bookUri: string;
+	bookId: string;
 	owner: Address;
 	likes: bigint;
 	userLikes?: bigint;
 	onLike: () => void;
+	onResetLike: () => void;
 	isPending: boolean;
 	isSuccess: boolean;
 }) {
@@ -133,63 +148,75 @@ function ReviewDetail({
 		>
 			<div className="bg-white rounded-xl shadow-md border border-gray-200 p-5 my-4 hover:shadow-xl transition-all duration-300 hover:border-gray-300">
 				{/* Header with owner and book info */}
-				<div className="mb-4 flex items-center justify-between">
-					<div className="flex items-center gap-2 text-xs text-gray-500 bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 rounded-full border border-blue-200">
-						<span className="font-semibold text-gray-700">
-							{abbreviateAddress(owner)}
-						</span>
-						<span className="text-gray-400">reviewed</span>
-						<BookDetail uri={bookUri} />
+				<div className="mb-6">
+					<div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 rounded-xl border border-gray-200 space-y-3">
+						{/* Reviewer info */}
+						<div className="flex items-center gap-2 text-xs text-gray-500">
+							<span className="font-semibold text-gray-700">
+								{abbreviateAddress(owner)}
+							</span>
+							<span className="text-gray-400">reviewed</span>
+						</div>
+
+						{/* Book info - prominently displayed */}
+						<div className="space-y-2">
+							<BookDetail uri={bookUri} bookId={bookId} />
+						</div>
 					</div>
 				</div>
 
-				{/* Review content */}
-				<div className="space-y-4">
-					<div>
-						<h3 className="text-xl font-bold text-gray-900 mb-2 leading-tight">
-							{data.name}
-						</h3>
-						<p className="text-sm text-gray-600 font-medium">
-							by {data.author}
-						</p>
-					</div>
+				{/* Review content - title and description combined */}
+				<div className="space-y-5">
+					<div className="bg-gradient-to-r from-gray-50 to-blue-50 p-5 rounded-xl border border-gray-200">
+						{/* Title and author */}
+						<div className="mb-4">
+							<h3 className="text-xl font-bold text-gray-900 mb-2 leading-tight">
+								{data.name}
+							</h3>
+							<p className="text-sm text-gray-600 font-medium">
+								by {data.author}
+							</p>
+						</div>
 
-					{/* Description with Disclosure for expand/collapse */}
-					{shouldTruncate ? (
-						<Disclosure>
-							{({ open }) => (
-								<div>
-									<div className="text-gray-700 leading-relaxed text-sm">
-										{open
-											? data.description
-											: `${data.description.slice(0, MAX_DESCRIPTION_LENGTH)}...`}
-									</div>
-									<DisclosureButton className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium mt-2 transition-colors duration-200 group">
-										<span>{open ? "Show less" : "Read more"}</span>
-										<ChevronDownIcon
-											className={`h-4 w-4 transition-transform duration-200 ${
-												open ? "rotate-180" : ""
-											} group-hover:scale-110`}
-										/>
-									</DisclosureButton>
-									<Transition
-										enter="transition duration-200 ease-out"
-										enterFrom="transform scale-95 opacity-0"
-										enterTo="transform scale-100 opacity-100"
-										leave="transition duration-150 ease-out"
-										leaveFrom="transform scale-100 opacity-100"
-										leaveTo="transform scale-95 opacity-0"
-									>
-										<DisclosurePanel className="mt-2" />
-									</Transition>
-								</div>
+						{/* Description with Disclosure for expand/collapse */}
+						<div className="border-t border-gray-200 pt-4">
+							{shouldTruncate ? (
+								<Disclosure>
+									{({ open }) => (
+										<div>
+											<div className="text-gray-700 leading-relaxed text-sm">
+												{open
+													? data.description
+													: `${data.description.slice(0, MAX_DESCRIPTION_LENGTH)}...`}
+											</div>
+											<DisclosureButton className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium mt-3 transition-colors duration-200 group">
+												<span>{open ? "Show less" : "Show more"}</span>
+												<ChevronDownIcon
+													className={`h-4 w-4 transition-transform duration-200 ${
+														open ? "rotate-180" : ""
+													} group-hover:scale-110`}
+												/>
+											</DisclosureButton>
+											<Transition
+												enter="transition duration-200 ease-out"
+												enterFrom="transform scale-95 opacity-0"
+												enterTo="transform scale-100 opacity-100"
+												leave="transition duration-150 ease-out"
+												leaveFrom="transform scale-100 opacity-100"
+												leaveTo="transform scale-95 opacity-0"
+											>
+												<DisclosurePanel className="mt-2" />
+											</Transition>
+										</div>
+									)}
+								</Disclosure>
+							) : (
+								<p className="text-gray-700 leading-relaxed text-sm">
+									{data.description}
+								</p>
 							)}
-						</Disclosure>
-					) : (
-						<p className="text-gray-700 leading-relaxed text-sm">
-							{data.description}
-						</p>
-					)}
+						</div>
+					</div>
 
 					{/* Image */}
 					{data.image && (
@@ -201,12 +228,12 @@ function ReviewDetail({
 							enterFrom="opacity-0 scale-90"
 							enterTo="opacity-100 scale-100"
 						>
-							<div className="flex justify-center">
+							<div className="flex justify-center bg-gray-50 p-4 rounded-xl">
 								<Image
 									src={data.image}
 									alt={data.name}
-									width={140}
-									height={140}
+									width={160}
+									height={160}
 									className="rounded-xl object-cover shadow-lg hover:shadow-xl transition-shadow duration-300"
 								/>
 							</div>
@@ -214,8 +241,19 @@ function ReviewDetail({
 					)}
 				</div>
 
-				{/* Like button */}
-				<div className="flex justify-end mt-6">
+				{/* Like and Reset buttons */}
+				<div className="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-100">
+					{userLikes && (
+						<button
+							type="button"
+							onClick={onResetLike}
+							disabled={isPending || isSuccess}
+							className="group flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 text-sm shadow-md hover:shadow-lg transform hover:scale-105 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white"
+						>
+							<XMarkIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+							<span className="font-semibold">Reset</span>
+						</button>
+					)}
 					<button
 						type="button"
 						onClick={onLike}
@@ -278,6 +316,35 @@ export default function Page() {
 					amounts: [...prev.amounts, BigInt(1)],
 				};
 			}
+		});
+	}, []);
+
+	const handleResetLike = useCallback((bookId: bigint, reviewId: bigint) => {
+		setState((prev) => {
+			// Find if the same bookId and reviewId combination exists
+			const existingIndex = prev.bookIds.findIndex(
+				(id, index) => id === bookId && prev.reviewIds[index] === reviewId,
+			);
+
+			if (existingIndex !== -1) {
+				// If exists, remove it from all arrays
+				const newBookIds = [...prev.bookIds];
+				const newReviewIds = [...prev.reviewIds];
+				const newAmounts = [...prev.amounts];
+
+				newBookIds.splice(existingIndex, 1);
+				newReviewIds.splice(existingIndex, 1);
+				newAmounts.splice(existingIndex, 1);
+
+				return {
+					bookIds: newBookIds,
+					reviewIds: newReviewIds,
+					amounts: newAmounts,
+				};
+			}
+
+			// If doesn't exist, return unchanged state
+			return prev;
 		});
 	}, []);
 
@@ -423,11 +490,18 @@ export default function Page() {
 									<ReviewDetail
 										uri={review.reviewURI}
 										bookUri={review.book.bookURI}
+										bookId={review.book.bookId}
 										owner={review.owner as Address}
 										likes={allLikes}
 										userLikes={userLikes}
 										onLike={() =>
 											handleLike(
+												BigInt(review.book.bookId),
+												BigInt(review.reviewId),
+											)
+										}
+										onResetLike={() =>
+											handleResetLike(
 												BigInt(review.book.bookId),
 												BigInt(review.reviewId),
 											)
@@ -439,19 +513,7 @@ export default function Page() {
 							);
 						})}
 					</div>
-				) : (
-					<div className="text-center py-12">
-						<div className="bg-white/70 backdrop-blur-sm rounded-xl p-8 border border-gray-200">
-							<div className="text-gray-400 text-6xl mb-4">📚</div>
-							<h3 className="text-lg font-semibold text-gray-700 mb-2">
-								No Reviews Yet
-							</h3>
-							<p className="text-gray-500 text-sm">
-								Be the first to share a book review!
-							</p>
-						</div>
-					</div>
-				)}
+				) : null}
 
 				{/* Enhanced Submit button with Transition */}
 				<Transition
