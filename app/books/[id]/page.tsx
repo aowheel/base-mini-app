@@ -7,21 +7,24 @@ import {
 	ArrowLeftIcon,
 	BookOpenIcon,
 	ExclamationTriangleIcon,
+	HeartIcon,
 	HomeIcon,
 	PencilIcon,
 	UserIcon,
 } from "@heroicons/react/24/outline";
-import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, use } from "react";
+import type { Address } from "viem";
 import { useIpfsJson } from "@/hooks/ipfs";
+import { abbreviateAddress } from "@/utils/address";
 
 const GET_BOOK = gql`
 	query GetBookQuery($id: ID = "") {
 		book(id: $id) {
 			bookURI
+			owner
 			likes {
 				amount
 			}
@@ -136,6 +139,7 @@ export default function BookDetailPage({
 	const { data, loading, error } = useQuery<{
 		book: {
 			bookURI: string;
+			owner: string;
 			likes: Array<{ amount: string }>;
 		};
 	}>(GET_BOOK, {
@@ -199,12 +203,21 @@ export default function BookDetailPage({
 					</div>
 				) : data?.book ? (
 					<>
-						{/* Total Likes Display */}
-						<div className="mb-6 text-center">
+						{/* Likes and Owner Display - Side by Side */}
+						<div className="mb-6 flex gap-3 justify-center">
+							{/* Total Likes Display */}
 							<div className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl shadow-sm">
-								<HeartIconSolid className="h-4 w-4 text-red-500" />
+								<HeartIcon className="h-4 w-4 text-red-500" />
 								<span className="text-red-700 font-medium text-sm">
-									{String(totalLikes)} total LIKES
+									{String(totalLikes)} LIKES
+								</span>
+							</div>
+
+							{/* Owner Display */}
+							<div className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl shadow-sm">
+								<UserIcon className="h-4 w-4 text-blue-500" />
+								<span className="text-blue-700 font-medium text-sm">
+									{abbreviateAddress(data.book.owner as Address)}
 								</span>
 							</div>
 						</div>

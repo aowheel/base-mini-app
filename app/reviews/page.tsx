@@ -27,9 +27,10 @@ import {
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import type { Address } from "viem";
-import { useAccount, useWriteContract } from "wagmi";
+import { baseSepolia } from "viem/chains";
+import { useAccount, useSwitchChain, useWriteContract } from "wagmi";
 import LIKE_ABI from "@/abis/like";
 import { useIpfsJson } from "@/hooks/ipfs";
 import { abbreviateAddress } from "@/utils/address";
@@ -43,6 +44,7 @@ const GET_REVIEWS = gql`
 			reviewId
 			reviewURI
 			book {
+				owner
 				bookId
 				bookURI
 			}
@@ -283,6 +285,7 @@ export default function Page() {
 				reviewId: string;
 				reviewURI: string;
 				book: {
+					owner: string;
 					bookId: string;
 					bookURI: string;
 				};
@@ -378,6 +381,7 @@ export default function Page() {
 		});
 	}, []);
 
+	const { switchChain } = useSwitchChain();
 	const { writeContract, isPending, isSuccess } = useWriteContract();
 
 	const handleSubmitLike = useCallback(
@@ -387,22 +391,49 @@ export default function Page() {
 			amounts: Array<bigint>,
 		) => {
 			try {
-				writeContract({
-					address: process.env.NEXT_PUBLIC_LIKE_CONTRACT_ADDRESS as Address,
-					abi: LIKE_ABI,
-					functionName: "batchDistribute",
-					args: [bookIds, reviewIds, amounts],
-				});
+				switchChain(
+					{ chainId: baseSepolia.id },
+					{
+						onSuccess: () =>
+							writeContract({
+								address: process.env
+									.NEXT_PUBLIC_LIKE_CONTRACT_ADDRESS as Address,
+								abi: LIKE_ABI,
+								functionName: "batchDistribute",
+								args: [bookIds, reviewIds, amounts],
+							}),
+					},
+				);
 			} catch {
 				console.error("Error calling contract");
 			}
 		},
-		[writeContract],
+		[switchChain, writeContract],
 	);
+
+	// Store submitted data for success dialog before resetting state
+	const [submittedData, setSubmittedData] = useState<{
+		bookIds: Array<bigint>;
+		reviewIds: Array<bigint>;
+		amounts: Array<bigint>;
+	}>({
+		bookIds: [],
+		reviewIds: [],
+		amounts: [],
+	});
+
+	// Track if we've already processed the success state
+	const hasProcessedSuccess = useRef(false);
 
 	// Show success dialog when transaction is successful
 	useEffect(() => {
-		if (isSuccess) {
+		if (isSuccess && !hasProcessedSuccess.current) {
+			// Store the submitted data before resetting
+			setSubmittedData({
+				bookIds: [...state.bookIds],
+				reviewIds: [...state.reviewIds],
+				amounts: [...state.amounts],
+			});
 			setShowSuccessDialog(true);
 			// Reset state after successful submission
 			setState({
@@ -410,8 +441,14 @@ export default function Page() {
 				reviewIds: [],
 				amounts: [],
 			});
+			hasProcessedSuccess.current = true;
 		}
-	}, [isSuccess]);
+
+		// Reset the ref when isSuccess becomes false (for next transaction)
+		if (!isSuccess) {
+			hasProcessedSuccess.current = false;
+		}
+	}, [isSuccess, state]);
 
 	if (loading) {
 		return (
@@ -586,7 +623,7 @@ export default function Page() {
 					</div>
 				</Transition>
 
-				{/* Success Dialog */}
+				{/* Success Dialog with Distribution Details */}
 				<Dialog
 					open={showSuccessDialog}
 					onClose={() => setShowSuccessDialog(false)}
@@ -594,23 +631,123 @@ export default function Page() {
 				>
 					<DialogBackdrop className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
 					<div className="fixed inset-0 flex items-center justify-center p-4">
-						<DialogPanel className="bg-white rounded-2xl p-6 max-w-sm mx-auto shadow-2xl border border-gray-200">
-							<div className="text-center">
+						<DialogPanel className="bg-white rounded-2xl p-6 max-w-lg mx-auto shadow-2xl border border-gray-200 max-h-[80vh] overflow-y-auto">
+							<div className="text-center mb-6">
 								<CheckCircleIcon className="h-16 w-16 text-green-500 mx-auto mb-4" />
 								<DialogTitle className="text-xl font-bold text-gray-900 mb-2">
-									Likes Submitted!
+									Likes Distributed!
 								</DialogTitle>
-								<p className="text-gray-600 text-sm mb-6">
-									Your likes have been successfully submitted to the blockchain.
+								<p className="text-gray-600 text-sm">
+									Your likes have been successfully distributed on the
+									blockchain.
 								</p>
-								<button
-									type="button"
-									onClick={() => setShowSuccessDialog(false)}
-									className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-medium rounded-xl transition-all duration-200 transform hover:scale-105"
-								>
-									Continue
-								</button>
 							</div>
+
+							{/* Distribution Details */}
+							<div className="space-y-4 mb-6">
+								<h3 className="text-lg font-semibold text-gray-800 text-center mb-4">
+									Distribution Summary
+								</h3>
+
+								{submittedData.reviewIds.map((reviewId, index) => {
+									const review = data?.reviews.find(
+										(r) => BigInt(r.reviewId) === reviewId,
+									);
+									const amount = submittedData.amounts[index];
+									const halfAmount = amount / BigInt(2);
+
+									if (!review) return null;
+
+									return (
+										<div
+											key={`distribution-${reviewId}`}
+											className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200"
+										>
+											<div className="text-center mb-3">
+												<div className="inline-flex items-center gap-2 bg-blue-100 px-3 py-1 rounded-full">
+													<HeartIcon className="h-4 w-4 text-blue-600" />
+													<span className="font-semibold text-blue-800 text-sm">
+														{String(amount)} LIKES
+													</span>
+												</div>
+											</div>
+
+											<div className="space-y-3">
+												{/* Review Owner */}
+												<div className="flex items-center justify-between bg-white/70 rounded-lg p-3 border border-blue-100">
+													<div className="flex items-center gap-2">
+														<UserCircleIcon className="h-5 w-5 text-indigo-600" />
+														<div>
+															<div className="text-xs text-gray-500 font-medium">
+																Review Owner
+															</div>
+															<div className="text-sm font-semibold text-gray-800">
+																{abbreviateAddress(review.owner as Address)}
+															</div>
+														</div>
+													</div>
+													<div className="text-right">
+														<div className="text-xs text-gray-500">
+															Receives
+														</div>
+														<div className="font-bold text-indigo-600">
+															{String(halfAmount)} LIKES
+														</div>
+													</div>
+												</div>
+
+												{/* Book Owner */}
+												<div className="flex items-center justify-between bg-white/70 rounded-lg p-3 border border-blue-100">
+													<div className="flex items-center gap-2">
+														<BookOpenIcon className="h-5 w-5 text-purple-600" />
+														<div>
+															<div className="text-xs text-gray-500 font-medium">
+																Book Owner
+															</div>
+															<div className="text-sm font-semibold text-gray-800">
+																{abbreviateAddress(
+																	review.book.owner as Address,
+																)}
+															</div>
+														</div>
+													</div>
+													<div className="text-right">
+														<div className="text-xs text-gray-500">
+															Receives
+														</div>
+														<div className="font-bold text-purple-600">
+															{String(halfAmount)} LIKES
+														</div>
+													</div>
+												</div>
+											</div>
+
+											{/* Split indicator */}
+											<div className="mt-3 text-center">
+												<div className="inline-flex items-center gap-2 text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+													<span>50% / 50% Split</span>
+												</div>
+											</div>
+										</div>
+									);
+								})}
+							</div>
+
+							<button
+								type="button"
+								onClick={() => {
+									setShowSuccessDialog(false);
+									// Clear submitted data
+									setSubmittedData({
+										bookIds: [],
+										reviewIds: [],
+										amounts: [],
+									});
+								}}
+								className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-medium rounded-xl transition-all duration-200 transform hover:scale-105"
+							>
+								Continue
+							</button>
 						</DialogPanel>
 					</div>
 				</Dialog>

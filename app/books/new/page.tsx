@@ -15,7 +15,8 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useWriteContract } from "wagmi";
+import { baseSepolia } from "viem/chains";
+import { useSwitchChain, useWriteContract } from "wagmi";
 import BOOK_ABI from "@/abis/book";
 
 interface BookMetadata {
@@ -27,6 +28,7 @@ interface BookMetadata {
 
 export default function NewBookPage() {
 	const router = useRouter();
+	const { switchChain } = useSwitchChain();
 	const { writeContract, isPending, isSuccess } = useWriteContract();
 
 	const [formData, setFormData] = useState({
@@ -175,12 +177,22 @@ export default function NewBookPage() {
 				message: "Metadata uploaded! Now registering on blockchain...",
 			});
 
-			writeContract({
-				address: process.env.NEXT_PUBLIC_BOOK_CONTRACT_ADDRESS as `0x${string}`,
-				abi: BOOK_ABI,
-				functionName: "mint",
-				args: [formData.mintAddress as `0x${string}`, `ipfs://${metadataCid}`],
-			});
+			switchChain(
+				{ chainId: baseSepolia.id },
+				{
+					onSuccess: () =>
+						writeContract({
+							address: process.env
+								.NEXT_PUBLIC_BOOK_CONTRACT_ADDRESS as `0x${string}`,
+							abi: BOOK_ABI,
+							functionName: "mint",
+							args: [
+								formData.mintAddress as `0x${string}`,
+								`ipfs://${metadataCid}`,
+							],
+						}),
+				},
+			);
 		} catch (error) {
 			setCurrentStep("idle");
 			setUploadStatus({

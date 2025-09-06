@@ -13,7 +13,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, use, useCallback, useEffect, useState } from "react";
 import type { Address } from "viem";
-import { useWriteContract } from "wagmi";
+import { baseSepolia } from "viem/chains";
+import { useSwitchChain, useWriteContract } from "wagmi";
 import REVIEW_ABI from "@/abis/review";
 
 export default function NewReviewPage({
@@ -23,6 +24,7 @@ export default function NewReviewPage({
 }) {
 	const router = useRouter();
 	const resolvedParams = use(params);
+	const { switchChain } = useSwitchChain();
 	const { writeContract, isPending, isSuccess, error } = useWriteContract();
 
 	// Form state
@@ -69,18 +71,25 @@ export default function NewReviewPage({
 				setUploadingToIpfs(false);
 
 				// Submit to contract
-				writeContract({
-					address: process.env.NEXT_PUBLIC_REVIEW_CONTRACT_ADDRESS as Address,
-					abi: REVIEW_ABI,
-					functionName: "mint",
-					args: [BigInt(resolvedParams.id), `ipfs://${cid}`],
-				});
+				switchChain(
+					{ chainId: baseSepolia.id },
+					{
+						onSuccess: () =>
+							writeContract({
+								address: process.env
+									.NEXT_PUBLIC_REVIEW_CONTRACT_ADDRESS as Address,
+								abi: REVIEW_ABI,
+								functionName: "mint",
+								args: [BigInt(resolvedParams.id), `ipfs://${cid}`],
+							}),
+					},
+				);
 			} catch {
 				setUploadError("Failed to upload review. Please try again.");
 				setUploadingToIpfs(false);
 			}
 		},
-		[formData, writeContract, resolvedParams.id],
+		[formData, switchChain, writeContract, resolvedParams.id],
 	);
 
 	// Redirect on success

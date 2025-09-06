@@ -18,13 +18,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { Address } from "viem";
-import { useAccount, useWriteContract } from "wagmi";
+import { baseSepolia } from "viem/chains";
+import { useAccount, useSwitchChain, useWriteContract } from "wagmi";
 import LIKE_ABI from "@/abis/like";
 import { publicClient } from "@/utils/viem";
 
 export default function LikesPage() {
 	const router = useRouter();
 	const account = useAccount();
+	const { switchChain } = useSwitchChain();
 	const { writeContract, isPending, isSuccess } = useWriteContract();
 	const [likeBalance, setLikeBalance] = useState<bigint>(BigInt(0));
 	const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -65,13 +67,23 @@ export default function LikesPage() {
 	const handleMintLikes = useCallback(() => {
 		if (!account.address) return;
 
-		writeContract({
-			address: process.env.NEXT_PUBLIC_LIKE_CONTRACT_ADDRESS as Address,
-			abi: LIKE_ABI,
-			functionName: "mint",
-			args: [account.address as Address, BigInt(mintAmount)],
-		});
-	}, [account.address, writeContract, mintAmount]);
+		try {
+			switchChain(
+				{ chainId: baseSepolia.id },
+				{
+					onSuccess: () =>
+						writeContract({
+							address: process.env.NEXT_PUBLIC_LIKE_CONTRACT_ADDRESS as Address,
+							abi: LIKE_ABI,
+							functionName: "mint",
+							args: [account.address as Address, BigInt(mintAmount)],
+						}),
+				},
+			);
+		} catch {
+			console.error("Error minting likes");
+		}
+	}, [account.address, switchChain, writeContract, mintAmount]);
 
 	// Show success dialog when transaction is successful
 	useEffect(() => {
