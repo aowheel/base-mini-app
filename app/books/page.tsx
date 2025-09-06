@@ -7,6 +7,7 @@ import {
 	BookOpenIcon,
 	ExclamationTriangleIcon,
 	HomeIcon,
+	PlusIcon,
 	UserIcon,
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
@@ -16,12 +17,10 @@ import { useIpfsJson } from "@/hooks/ipfs";
 
 const GET_BOOKS = gql`
 	query GetBooksQuery($first: Int = 10) {
-		reviews(orderBy: blockTimestamp, orderDirection: desc, first: $first) {
+		books(orderBy: blockTimestamp, orderDirection: desc, first: $first) {
 			id
-			book {
-				id
-				bookURI
-			}
+			bookId
+			bookURI
 		}
 	}
 `;
@@ -126,38 +125,32 @@ function BookCard({ uri, bookId }: { uri: string; bookId: string }) {
 
 export default function BooksPage() {
 	const { data, loading, error } = useQuery<{
-		reviews: Array<{
+		books: Array<{
 			id: string;
-			book: {
-				id: string;
-				bookURI: string;
-			};
+			bookId: string;
+			bookURI: string;
 		}>;
 	}>(GET_BOOKS, { fetchPolicy: "no-cache" });
-
-	// Get unique books (remove duplicates)
-	const uniqueBooks = data?.reviews.reduce(
-		(acc, review) => {
-			const existingBook = acc.find((item) => item.book.id === review.book.id);
-			if (!existingBook) {
-				acc.push(review);
-			}
-			return acc;
-		},
-		[] as typeof data.reviews,
-	);
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-6">
 			<div className="max-w-4xl mx-auto">
 				{/* Navigation */}
-				<div className="mb-8">
+				<div className="mb-8 flex justify-between items-center">
 					<Link
 						href="/"
 						className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
 					>
 						<HomeIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
 						<span>Home</span>
+					</Link>
+
+					<Link
+						href="/books/new"
+						className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl border border-transparent transition-all duration-200 hover:shadow-md group"
+					>
+						<PlusIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+						<span>Add New Book</span>
 					</Link>
 				</div>
 
@@ -203,14 +196,11 @@ export default function BooksPage() {
 							There was an error loading the books. Please try again later.
 						</p>
 					</div>
-				) : uniqueBooks && uniqueBooks.length > 0 ? (
+				) : data?.books && data.books.length > 0 ? (
 					<div className="grid gap-6 md:grid-cols-2">
-						{uniqueBooks.map((review, index) => (
-							<div
-								key={review.book.id}
-								style={{ animationDelay: `${index * 100}ms` }}
-							>
-								<BookCard uri={review.book.bookURI} bookId={review.book.id} />
+						{data.books.map((book, index) => (
+							<div key={book.id} style={{ animationDelay: `${index * 100}ms` }}>
+								<BookCard uri={book.bookURI} bookId={book.bookId} />
 							</div>
 						))}
 					</div>

@@ -27,10 +27,11 @@ import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import type { Address } from "viem";
-import { useWriteContract } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import LIKE_ABI from "@/abis/like";
 import { useIpfsJson } from "@/hooks/ipfs";
 import { abbreviateAddress } from "@/utils/address";
+import { publicClient } from "@/utils/viem";
 
 const GET_REVIEWS = gql`
 	query GetReviewsQuery($first: Int = 10) {
@@ -271,6 +272,42 @@ function ReviewDetail({
 }
 
 export default function Page() {
+	const { data, loading, error } = useQuery<
+		{
+			reviews: Array<{
+				id: string;
+				owner: string;
+				reviewId: string;
+				reviewURI: string;
+				book: {
+					bookId: string;
+					bookURI: string;
+				};
+				likes: Array<{ amount: string }>;
+			}>;
+		},
+		{
+			first?: number;
+		}
+	>(GET_REVIEWS, { fetchPolicy: "no-cache" });
+
+	const account = useAccount();
+	const [likeBalance, setLikeBalance] = useState<bigint>(BigInt(0));
+	useEffect(() => {
+		if (account.address) {
+			publicClient
+				.readContract({
+					address: process.env.NEXT_PUBLIC_LIKE_CONTRACT_ADDRESS as Address,
+					abi: LIKE_ABI,
+					functionName: "balanceOf",
+					args: [account.address as Address],
+				})
+				.then((balance) => {
+					setLikeBalance(balance);
+				});
+		}
+	}, [account.address]);
+
 	const [state, setState] = useState<{
 		bookIds: Array<bigint>;
 		reviewIds: Array<bigint>;
@@ -360,25 +397,6 @@ export default function Page() {
 		[writeContract],
 	);
 
-	const { data, loading, error } = useQuery<
-		{
-			reviews: Array<{
-				id: string;
-				owner: string;
-				reviewId: string;
-				reviewURI: string;
-				book: {
-					bookId: string;
-					bookURI: string;
-				};
-				likes: Array<{ amount: string }>;
-			}>;
-		},
-		{
-			first?: number;
-		}
-	>(GET_REVIEWS, { fetchPolicy: "no-cache" });
-
 	// Show success dialog when transaction is successful
 	useEffect(() => {
 		if (isSuccess) {
@@ -440,8 +458,8 @@ export default function Page() {
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 px-3 py-4">
 			<div className="max-w-md mx-auto">
-				{/* Enhanced Home button */}
-				<div className="mb-6">
+				{/* Header with Home button and Like Balance */}
+				<div className="flex justify-between items-center mb-6">
 					<Link
 						href="/"
 						className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
@@ -449,6 +467,17 @@ export default function Page() {
 						<HomeIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
 						<span>Home</span>
 					</Link>
+
+					{/* Like Balance Display */}
+					{account.address && (
+						<Link
+							href="/likes"
+							className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-xl border border-purple-400 transition-all duration-200 hover:shadow-md transform hover:scale-105"
+						>
+							<HeartIcon className="h-4 w-4 text-white" />
+							<span className="font-semibold">{String(likeBalance)}</span>
+						</Link>
+					)}
 				</div>
 
 				{/* Enhanced title */}
