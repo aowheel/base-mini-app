@@ -187,16 +187,14 @@ export default function BookDetailPage({
 				) : data?.book ? (
 					<>
 						{/* Total Likes Display */}
-						{totalLikes && totalLikes > 0 && (
-							<div className="mb-6 text-center">
-								<div className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl shadow-sm">
-									<HeartIconSolid className="h-4 w-4 text-red-500" />
-									<span className="text-red-700 font-medium text-sm">
-										{String(totalLikes)} total LIKES
-									</span>
-								</div>
+						<div className="mb-6 text-center">
+							<div className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl shadow-sm">
+								<HeartIconSolid className="h-4 w-4 text-red-500" />
+								<span className="text-red-700 font-medium text-sm">
+									{String(totalLikes)} total LIKES
+								</span>
 							</div>
-						)}
+						</div>
 
 						<BookContent bookURI={data.book.bookURI} />
 
