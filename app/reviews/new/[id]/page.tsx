@@ -6,6 +6,7 @@ import {
 	BookOpenIcon,
 	CheckCircleIcon,
 	ExclamationTriangleIcon,
+	HomeIcon,
 	PencilIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -100,13 +101,23 @@ export default function NewReviewPage({
 			<div className="max-w-2xl mx-auto">
 				{/* Navigation */}
 				<div className="mb-8">
-					<Link
-						href="/reviews"
-						className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
-					>
-						<ArrowLeftIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
-						<span>Back to Reviews</span>
-					</Link>
+					<div className="flex gap-3">
+						<button
+							type="button"
+							onClick={() => router.back()}
+							className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
+						>
+							<ArrowLeftIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+							<span>Back</span>
+						</button>
+						<Link
+							href="/"
+							className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
+						>
+							<HomeIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+							<span>Home</span>
+						</Link>
+					</div>
 				</div>
 
 				{/* Title */}

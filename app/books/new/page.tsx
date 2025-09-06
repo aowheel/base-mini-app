@@ -10,8 +10,10 @@ import {
 	ArrowLeftIcon,
 	BookOpenIcon,
 	CheckCircleIcon,
+	HomeIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useWriteContract } from "wagmi";
 import BOOK_ABI from "@/abis/book";
@@ -24,12 +26,14 @@ interface BookMetadata {
 }
 
 export default function NewBookPage() {
+	const router = useRouter();
 	const { writeContract, isPending, isSuccess } = useWriteContract();
 
 	const [formData, setFormData] = useState({
 		name: "",
 		description: "",
 		author: "",
+		mintAddress: "",
 	});
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [isUploading, setIsUploading] = useState(false);
@@ -104,7 +108,7 @@ export default function NewBookPage() {
 			setCurrentStep("completed");
 			setShowSuccessDialog(true);
 			// Reset form
-			setFormData({ name: "", description: "", author: "" });
+			setFormData({ name: "", description: "", author: "", mintAddress: "" });
 			setSelectedFile(null);
 			setMetadataCid("");
 			setUploadStatus({ type: null, message: "" });
@@ -120,10 +124,21 @@ export default function NewBookPage() {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		if (!formData.name || !formData.description) {
+		if (!formData.name || !formData.description || !formData.mintAddress) {
 			setUploadStatus({
 				type: "error",
-				message: "Please fill in the required fields (name and description)",
+				message:
+					"Please fill in the required fields (name, description, and mint address)",
+			});
+			return;
+		}
+
+		// Validate Ethereum address format
+		if (!/^0x[a-fA-F0-9]{40}$/.test(formData.mintAddress)) {
+			setUploadStatus({
+				type: "error",
+				message:
+					"Please enter a valid Ethereum address (0x followed by 40 hexadecimal characters)",
 			});
 			return;
 		}
@@ -164,10 +179,7 @@ export default function NewBookPage() {
 				address: process.env.NEXT_PUBLIC_BOOK_CONTRACT_ADDRESS as `0x${string}`,
 				abi: BOOK_ABI,
 				functionName: "mint",
-				args: [
-					"0x8C713BB047edcc200427f7605E66E0329258dAC9",
-					`ipfs://${metadataCid}`,
-				],
+				args: [formData.mintAddress as `0x${string}`, `ipfs://${metadataCid}`],
 			});
 		} catch (error) {
 			setCurrentStep("idle");
@@ -188,13 +200,23 @@ export default function NewBookPage() {
 			<div className="max-w-2xl mx-auto">
 				{/* Navigation */}
 				<div className="mb-8">
-					<Link
-						href="/books"
-						className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
-					>
-						<ArrowLeftIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
-						<span>Back to Books</span>
-					</Link>
+					<div className="flex gap-3">
+						<button
+							type="button"
+							onClick={() => router.back()}
+							className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
+						>
+							<ArrowLeftIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+							<span>Back</span>
+						</button>
+						<Link
+							href="/"
+							className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
+						>
+							<HomeIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+							<span>Home</span>
+						</Link>
+					</div>
 				</div>
 
 				{/* Title */}
@@ -265,6 +287,29 @@ export default function NewBookPage() {
 								className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/80 text-gray-900 placeholder-gray-500"
 								placeholder="Enter author name (optional)"
 							/>
+						</div>
+
+						{/* Mint Address */}
+						<div>
+							<label
+								htmlFor="mintAddress"
+								className="block text-sm font-medium text-gray-700 mb-2"
+							>
+								Mint Address *
+							</label>
+							<input
+								type="text"
+								id="mintAddress"
+								name="mintAddress"
+								value={formData.mintAddress}
+								onChange={handleInputChange}
+								required
+								className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/80 text-gray-900 placeholder-gray-500 font-mono text-sm"
+								placeholder="0x..."
+							/>
+							<p className="mt-1 text-xs text-gray-500">
+								The Ethereum address where the NFT will be minted
+							</p>
 						</div>
 
 						{/* Book Cover Image */}

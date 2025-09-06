@@ -10,10 +10,12 @@ import {
 	ArrowLeftIcon,
 	CheckCircleIcon,
 	HeartIcon,
+	HomeIcon,
 	PlusIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { Address } from "viem";
 import { useAccount, useWriteContract } from "wagmi";
@@ -21,6 +23,7 @@ import LIKE_ABI from "@/abis/like";
 import { publicClient } from "@/utils/viem";
 
 export default function LikesPage() {
+	const router = useRouter();
 	const account = useAccount();
 	const { writeContract, isPending, isSuccess } = useWriteContract();
 	const [likeBalance, setLikeBalance] = useState<bigint>(BigInt(0));
@@ -84,13 +87,23 @@ export default function LikesPage() {
 			<div className="max-w-md mx-auto">
 				{/* Header with Back button */}
 				<div className="mb-6">
-					<Link
-						href="/reviews"
-						className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
-					>
-						<ArrowLeftIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
-						<span>Back to Reviews</span>
-					</Link>
+					<div className="flex gap-3">
+						<button
+							type="button"
+							onClick={() => router.back()}
+							className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
+						>
+							<ArrowLeftIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+							<span>Back</span>
+						</button>
+						<Link
+							href="/"
+							className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
+						>
+							<HomeIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+							<span>Home</span>
+						</Link>
+					</div>
 				</div>
 
 				{/* Title */}

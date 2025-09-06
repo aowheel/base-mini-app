@@ -4,6 +4,7 @@ import { gql } from "@apollo/client";
 import { useQuery } from "@apollo/client/react";
 import { Transition } from "@headlessui/react";
 import {
+	ArrowLeftIcon,
 	BookOpenIcon,
 	ExclamationTriangleIcon,
 	HomeIcon,
@@ -12,6 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Fragment } from "react";
 import { useIpfsJson } from "@/hooks/ipfs";
 
@@ -124,6 +126,7 @@ function BookCard({ uri, bookId }: { uri: string; bookId: string }) {
 }
 
 export default function BooksPage() {
+	const router = useRouter();
 	const { data, loading, error } = useQuery<{
 		books: Array<{
 			id: string;
@@ -137,13 +140,23 @@ export default function BooksPage() {
 			<div className="max-w-4xl mx-auto">
 				{/* Navigation */}
 				<div className="mb-8 flex justify-between items-center">
-					<Link
-						href="/"
-						className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
-					>
-						<HomeIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
-						<span>Home</span>
-					</Link>
+					<div className="flex gap-3">
+						<button
+							type="button"
+							onClick={() => router.back()}
+							className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
+						>
+							<ArrowLeftIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+							<span>Back</span>
+						</button>
+						<Link
+							href="/"
+							className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
+						>
+							<HomeIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+							<span>Home</span>
+						</Link>
+					</div>
 
 					<Link
 						href="/books/new"

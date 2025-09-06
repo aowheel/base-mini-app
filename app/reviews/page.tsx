@@ -14,6 +14,7 @@ import {
 } from "@headlessui/react";
 import {
 	ArrowDownIcon,
+	ArrowLeftIcon,
 	BookOpenIcon,
 	CheckCircleIcon,
 	ChevronDownIcon,
@@ -25,6 +26,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import type { Address } from "viem";
 import { useAccount, useWriteContract } from "wagmi";
@@ -272,6 +274,7 @@ function ReviewDetail({
 }
 
 export default function Page() {
+	const router = useRouter();
 	const { data, loading, error } = useQuery<
 		{
 			reviews: Array<{
@@ -460,13 +463,23 @@ export default function Page() {
 			<div className="max-w-md mx-auto">
 				{/* Header with Home button and Like Balance */}
 				<div className="flex justify-between items-center mb-6">
-					<Link
-						href="/"
-						className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
-					>
-						<HomeIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
-						<span>Home</span>
-					</Link>
+					<div className="flex gap-3">
+						<button
+							type="button"
+							onClick={() => router.back()}
+							className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
+						>
+							<ArrowLeftIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+							<span>Back</span>
+						</button>
+						<Link
+							href="/"
+							className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white/70 backdrop-blur-sm rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-md group"
+						>
+							<HomeIcon className="h-4 w-4 group-hover:scale-110 transition-transform" />
+							<span>Home</span>
+						</Link>
+					</div>
 
 					{/* Like Balance Display */}
 					{account.address && (
