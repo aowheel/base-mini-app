@@ -7,6 +7,7 @@ import {
 	ArrowLeftIcon,
 	BookOpenIcon,
 	ExclamationTriangleIcon,
+	PencilIcon,
 	UserIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
@@ -27,9 +28,9 @@ const GET_BOOK = gql`
 `;
 
 interface BookData {
-	title: string;
+	name: string;
 	description: string;
-	author: string;
+	author?: string;
 	image?: string;
 }
 
@@ -82,8 +83,8 @@ function BookContent({ bookURI }: { bookURI: string }) {
 					<div className="flex justify-center">
 						<div className="relative">
 							<Image
-								src={`/api/ipfs/image/${data.image}`}
-								alt={data.title}
+								src={`/api/ipfs/image/${data.image.startsWith("ipfs://") ? data.image.replace("ipfs://", "") : data.image}`}
+								alt={data.name}
 								width={300}
 								height={400}
 								className="rounded-2xl shadow-2xl object-cover"
@@ -100,7 +101,7 @@ function BookContent({ bookURI }: { bookURI: string }) {
 						{/* Title */}
 						<div>
 							<h1 className="text-3xl font-bold text-gray-900 mb-2 leading-tight">
-								{data.title}
+								{data.name}
 							</h1>
 							<div className="flex items-center gap-2 text-gray-600">
 								<UserIcon className="h-5 w-5" />
@@ -199,6 +200,17 @@ export default function BookDetailPage({
 						)}
 
 						<BookContent bookURI={data.book.bookURI} />
+
+						{/* Write Review Button */}
+						<div className="mt-8">
+							<Link
+								href={`/reviews/new/${resolvedParams.id}`}
+								className="w-full inline-flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] group"
+							>
+								<PencilIcon className="h-5 w-5 group-hover:scale-110 transition-transform" />
+								<span>Write a Review</span>
+							</Link>
+						</div>
 					</>
 				) : (
 					<div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">

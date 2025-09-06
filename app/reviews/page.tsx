@@ -13,15 +13,17 @@ import {
 	Transition,
 } from "@headlessui/react";
 import {
+	ArrowDownIcon,
+	BookOpenIcon,
 	CheckCircleIcon,
 	ChevronDownIcon,
 	ExclamationTriangleIcon,
 	HeartIcon,
 	HomeIcon,
+	UserCircleIcon,
 	XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
-import Image from "next/image";
 import Link from "next/link";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import type { Address } from "viem";
@@ -52,8 +54,8 @@ function BookDetail({ uri, bookId }: { uri: string; bookId: string }) {
 	const { data, loading, error } = useIpfsJson<{
 		name: string;
 		description: string;
-		image: string;
-		author: string;
+		author?: string;
+		image?: string;
 	}>(uri);
 
 	if (loading) {
@@ -71,10 +73,15 @@ function BookDetail({ uri, bookId }: { uri: string; bookId: string }) {
 	return (
 		<Link
 			href={`/books/${bookId}`}
-			className="font-bold text-blue-800 hover:text-blue-900 transition-all duration-200 flex-shrink-0 inline-block bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-md transform hover:scale-105"
+			className="group flex items-center gap-2 font-bold text-indigo-800 hover:text-indigo-900 transition-all duration-300 flex-shrink-0 bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 px-4 py-2.5 rounded-xl border border-indigo-200 hover:border-indigo-300 shadow-md hover:shadow-lg transform hover:scale-105 backdrop-blur-sm"
 			title={data.name}
 		>
-			{data.name}
+			<div className="flex-shrink-0 w-6 h-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-300">
+				<BookOpenIcon className="h-3.5 w-3.5 text-white" />
+			</div>
+			<span className="font-semibold text-sm leading-tight max-w-[200px] truncate">
+				{data.name}
+			</span>
 		</Link>
 	);
 }
@@ -105,8 +112,6 @@ function ReviewDetail({
 	const { data, loading, error } = useIpfsJson<{
 		name: string;
 		description: string;
-		image: string;
-		author: string;
 	}>(uri);
 
 	if (loading) {
@@ -149,18 +154,33 @@ function ReviewDetail({
 			<div className="bg-white rounded-xl shadow-md border border-gray-200 p-5 my-4 hover:shadow-xl transition-all duration-300 hover:border-gray-300">
 				{/* Header with owner and book info */}
 				<div className="mb-6">
-					<div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 rounded-xl border border-gray-200 space-y-3">
-						{/* Reviewer info */}
-						<div className="flex items-center gap-2 text-xs text-gray-500">
-							<span className="font-semibold text-gray-700">
-								{abbreviateAddress(owner)}
-							</span>
-							<span className="text-gray-400">reviewed</span>
-						</div>
+					<div className="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 p-5 rounded-2xl border border-indigo-100 shadow-sm">
+						{/* Decorative background pattern */}
+						<div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent"></div>
+						<div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-100/30 to-transparent rounded-full -translate-y-16 translate-x-16"></div>
 
-						{/* Book info - prominently displayed */}
-						<div className="space-y-2">
-							<BookDetail uri={bookUri} bookId={bookId} />
+						<div className="relative space-y-3">
+							{/* User info */}
+							<div className="flex justify-center">
+								<div className="group flex items-center gap-2 font-bold text-indigo-800 transition-all duration-300 bg-gradient-to-r from-indigo-50 to-purple-50 px-4 py-2.5 rounded-xl border border-indigo-200 shadow-md backdrop-blur-sm">
+									<div className="flex-shrink-0 w-6 h-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm transition-all duration-300">
+										<UserCircleIcon className="h-3.5 w-3.5 text-white" />
+									</div>
+									<span className="font-semibold text-sm leading-tight">
+										{abbreviateAddress(owner)}
+									</span>
+								</div>
+							</div>
+
+							{/* Arrow */}
+							<div className="flex justify-center">
+								<ArrowDownIcon className="h-4 w-4 text-indigo-400" />
+							</div>
+
+							{/* Book info */}
+							<div className="flex justify-center">
+								<BookDetail uri={bookUri} bookId={bookId} />
+							</div>
 						</div>
 					</div>
 				</div>
@@ -168,15 +188,10 @@ function ReviewDetail({
 				{/* Review content - title and description combined */}
 				<div className="space-y-5">
 					<div className="bg-gradient-to-r from-gray-50 to-blue-50 p-5 rounded-xl border border-gray-200">
-						{/* Title and author */}
-						<div className="mb-4">
-							<h3 className="text-xl font-bold text-gray-900 mb-2 leading-tight">
-								{data.name}
-							</h3>
-							<p className="text-sm text-gray-600 font-medium">
-								by {data.author}
-							</p>
-						</div>
+						{/* Title */}
+						<h3 className="text-xl font-bold text-gray-900 mb-4 leading-tight">
+							{data.name}
+						</h3>
 
 						{/* Description with Disclosure for expand/collapse */}
 						<div className="border-t border-gray-200 pt-4">
@@ -217,28 +232,6 @@ function ReviewDetail({
 							)}
 						</div>
 					</div>
-
-					{/* Image */}
-					{data.image && (
-						<Transition
-							appear
-							show={true}
-							as={Fragment}
-							enter="transition-all duration-500 delay-200"
-							enterFrom="opacity-0 scale-90"
-							enterTo="opacity-100 scale-100"
-						>
-							<div className="flex justify-center bg-gray-50 p-4 rounded-xl">
-								<Image
-									src={data.image}
-									alt={data.name}
-									width={160}
-									height={160}
-									className="rounded-xl object-cover shadow-lg hover:shadow-xl transition-shadow duration-300"
-								/>
-							</div>
-						</Transition>
-					)}
 				</div>
 
 				{/* Like and Reset buttons */}
@@ -278,9 +271,6 @@ function ReviewDetail({
 }
 
 export default function Page() {
-	const LIKE_CONTRACT_ADDRESS = process.env
-		.NEXT_PUBLIC_LIKE_CONTRACT_ADDRESS as Address;
-
 	const [state, setState] = useState<{
 		bookIds: Array<bigint>;
 		reviewIds: Array<bigint>;
@@ -358,7 +348,7 @@ export default function Page() {
 		) => {
 			try {
 				writeContract({
-					address: LIKE_CONTRACT_ADDRESS,
+					address: process.env.NEXT_PUBLIC_LIKE_CONTRACT_ADDRESS as Address,
 					abi: LIKE_ABI,
 					functionName: "batchDistribute",
 					args: [bookIds, reviewIds, amounts],
@@ -367,21 +357,8 @@ export default function Page() {
 				console.error("Error calling contract");
 			}
 		},
-		[LIKE_CONTRACT_ADDRESS, writeContract],
+		[writeContract],
 	);
-
-	// Show success dialog when transaction is successful
-	useEffect(() => {
-		if (isSuccess) {
-			setShowSuccessDialog(true);
-			// Reset state after successful submission
-			setState({
-				bookIds: [],
-				reviewIds: [],
-				amounts: [],
-			});
-		}
-	}, [isSuccess]);
 
 	const { data, loading, error } = useQuery<
 		{
@@ -401,6 +378,19 @@ export default function Page() {
 			first?: number;
 		}
 	>(GET_REVIEWS, { fetchPolicy: "no-cache" });
+
+	// Show success dialog when transaction is successful
+	useEffect(() => {
+		if (isSuccess) {
+			setShowSuccessDialog(true);
+			// Reset state after successful submission
+			setState({
+				bookIds: [],
+				reviewIds: [],
+				amounts: [],
+			});
+		}
+	}, [isSuccess]);
 
 	if (loading) {
 		return (

@@ -27,10 +27,10 @@ const GET_BOOKS = gql`
 `;
 
 interface BookData {
-	title: string;
+	name: string;
 	description: string;
+	author?: string;
 	image?: string;
-	author: string;
 }
 
 function BookCard({ uri, bookId }: { uri: string; bookId: string }) {
@@ -87,8 +87,8 @@ function BookCard({ uri, bookId }: { uri: string; bookId: string }) {
 						<div className="flex-shrink-0">
 							{data.image ? (
 								<Image
-									src={`/api/ipfs/image/${data.image}`}
-									alt={data.title}
+									src={`/api/ipfs/image/${data.image.startsWith("ipfs://") ? data.image.replace("ipfs://", "") : data.image}`}
+									alt={data.name}
 									width={80}
 									height={112}
 									className="rounded-lg object-cover shadow-sm group-hover:shadow-md transition-shadow duration-300"
@@ -104,7 +104,7 @@ function BookCard({ uri, bookId }: { uri: string; bookId: string }) {
 						<div className="flex-1 min-w-0">
 							<div className="space-y-2">
 								<h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-200 line-clamp-2">
-									{data.title}
+									{data.name}
 								</h3>
 								<div className="flex items-center gap-1 text-gray-600">
 									<UserIcon className="h-4 w-4 flex-shrink-0" />
