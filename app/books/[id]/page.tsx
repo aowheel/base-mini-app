@@ -182,7 +182,8 @@ export default function BookDetailPage({
 							Book Not Found
 						</h2>
 						<p className="text-red-600">
-							The book you're looking for doesn't exist or couldn't be loaded.
+							The book you&apos;re looking for doesn&apos;t exist or
+							couldn&apos;t be loaded.
 						</p>
 					</div>
 				) : data?.book ? (
@@ -219,7 +220,7 @@ export default function BookDetailPage({
 							Book Not Found
 						</h2>
 						<p className="text-gray-500">
-							The book you're looking for doesn't exist.
+							The book you&apos;re looking for doesn&apos;t exist.
 						</p>
 					</div>
 				)}
