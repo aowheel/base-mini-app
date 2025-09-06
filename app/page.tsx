@@ -21,6 +21,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useSwitchChain } from "wagmi";
+import { baseSepolia } from "wagmi/chains";
 
 export default function App() {
 	const { setFrameReady, isFrameReady } = useMiniKit();
@@ -31,6 +33,11 @@ export default function App() {
 			setFrameReady();
 		}
 	}, [setFrameReady, isFrameReady]);
+
+	const { switchChain } = useSwitchChain();
+	useEffect(() => {
+		switchChain({ chainId: baseSepolia.id });
+	}, [switchChain]);
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 px-3 py-4">
